@@ -122,16 +122,43 @@ app.get("/messages", async (req, res) => {
   }
 
   try {
-    const teste = await db
+    const shownMessages = await db
       .collection("messages")
-      .find({ $or: [{ from: participant }, { to: participant }] })
+      .find({
+        $or: [{ from: participant }, { to: participant }, { to: "Todos" }],
+      })
       .toArray();
 
     if (limit) {
-      return res.status(200).send(teste.slice(-limit));
+      return res.status(200).send(shownMessages.slice(-limit));
     }
 
-    res.status(200).send(teste);
+    res.status(200).send(shownMessages);
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+});
+
+app.post("/status", async (req, res) => {
+  const participant = req.headers.user;
+
+  if (!participant) {
+    return res.sendStatus(404);
+  }
+
+  try {
+    const exists = await db
+      .collection("participants")
+      .findOne({ name: participant });
+
+    if (!exists) {
+      return res.sendStatus(404);
+    }
+
+    await db
+      .collection("participants")
+      .updateOne({ name: participant }, { $set: { lastStatus: Date.now() } });
+    res.sendStatus(200);
   } catch (err) {
     res.status(500).send(err.message);
   }
