@@ -116,9 +116,6 @@ app.post("/messages", async (req, res) => {
 app.get("/messages", async (req, res) => {
   const participant = req.headers.user;
   const limit = req.query.limit;
-  console.log(Number(limit) <= 0);
-  console.log(isNaN(limit));
-  console.log(limit);
 
   if (Number(limit) <= 0 || (isNaN(limit) && limit !== undefined)) {
     return res.sendStatus(422);
