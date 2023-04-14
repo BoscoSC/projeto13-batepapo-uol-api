@@ -80,5 +80,38 @@ app.get("/participants", async (req, res) => {
   }
 });
 
+app.post("/messages", async (req, res) => {
+  const { to, text, type } = req.body;
+  const from = req.headers.user;
+
+  const validation = messagesSchema.validate({ from, to, text, type });
+  if (validation.error) {
+    const error = validation.error.details.map((detail) => detail.message);
+    return res.status(422).send(error);
+  }
+
+  try {
+    const fromExists = await db
+      .collection("participants")
+      .findOne({ name: from });
+
+    if (!fromExists) {
+      return res.sendStatus(422);
+    }
+
+    await db.collection("messages").insertOne({
+      from,
+      to,
+      text,
+      type,
+      time: dayjs().format("HH:mm:ss"),
+    });
+
+    res.sendStatus(201);
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+});
+
 const PORT = 5000;
 app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
