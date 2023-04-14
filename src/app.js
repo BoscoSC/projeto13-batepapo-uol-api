@@ -115,9 +115,12 @@ app.post("/messages", async (req, res) => {
 
 app.get("/messages", async (req, res) => {
   const participant = req.headers.user;
-  const limit = parseInt(req.query.limit);
+  const limit = req.query.limit;
+  console.log(Number(limit) <= 0);
+  console.log(isNaN(limit));
+  console.log(limit);
 
-  if (limit <= 0) {
+  if (Number(limit) <= 0 || (isNaN(limit) && limit !== undefined)) {
     return res.sendStatus(422);
   }
 
@@ -173,7 +176,7 @@ setInterval(async () => {
       .find({ lastStatus: { $lt: limitedTime } })
       .toArray();
 
-    if (inactiveList) {
+    if (inactiveList.length > 0) {
       await db
         .collection("participants")
         .deleteMany({ lastStatus: { $lt: limitedTime } });
@@ -191,7 +194,7 @@ setInterval(async () => {
       await db.collection("messages").insertMany(messagesList);
     }
   } catch (err) {
-    res.status(500).send(err.message);
+    console.log(err.message);
   }
 }, 15000);
 
