@@ -164,5 +164,36 @@ app.post("/status", async (req, res) => {
   }
 });
 
+setInterval(async () => {
+  const limitedTime = Date.now() - 9999;
+
+  try {
+    const inactiveList = await db
+      .collection("participants")
+      .find({ lastStatus: { $lt: limitedTime } })
+      .toArray();
+
+    if (inactiveList) {
+      await db
+        .collection("participants")
+        .deleteMany({ lastStatus: { $lt: limitedTime } });
+
+      const messagesList = inactiveList.map((participant) => {
+        return {
+          from: participant.name,
+          to: "Todos",
+          text: "sai da sala...",
+          type: "status",
+          time: Date.now(),
+        };
+      });
+
+      await db.collection("messages").insertMany(messagesList);
+    }
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+});
+
 const PORT = 5000;
 app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
